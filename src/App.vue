@@ -8,6 +8,7 @@ import AICard from './components/AICard.vue'
 import SettingsCard from './components/SettingsCard.vue'
 import PatternCard from './components/PatternCard.vue'
 import AiSettingsModal from './components/AiSettingsModal.vue'
+import ContactModal from './components/ContactModal.vue'
 import { fileToPattern } from './lib/pipeline.js'
 import { getPalette } from './lib/palettes.js'
 
@@ -15,6 +16,7 @@ const mode = ref('upload') // upload | ai
 const pattern = ref(null)  // 当前图纸
 const processing = ref(false)
 const showAiSettings = ref(false)
+const showContact = ref(false)
 const toastMsg = ref('')
 let toastTimer = null
 const sourceFile = ref(null) // 当前源图（用于参数变化后重新生成）
@@ -106,10 +108,12 @@ const boardCount = computed(() => {
 
     <div class="footer">
       数据全程在本地处理，不上传任何服务器 · 支持添加到主屏幕使用<br />
+      开发者：涛涛 · <button class="link-btn" @click="showContact = true">📮 联系作者</button><br />
       Perler Studio ❤️ 为拼豆爱好者制作
     </div>
   </div>
 
+  <ContactModal v-if="showContact" @close="showContact = false" />
   <AiSettingsModal v-if="showAiSettings" @close="showAiSettings = false" @toast="toast" />
   <div v-if="toastMsg" class="toast">{{ toastMsg }}</div>
 </template>
