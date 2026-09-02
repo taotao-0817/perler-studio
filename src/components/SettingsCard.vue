@@ -48,7 +48,7 @@ function setSize(s) {
 </script>
 
 <template>
-  <div class="card">
+  <div class="card" data-step="2" style="--i:2">
     <h2><span class="no">2</span>图纸参数</h2>
     <p class="desc">调整后会自动重新生成图纸（示例里建议 29×29 起）</p>
 

@@ -59,7 +59,7 @@ async function onGenerate() {
 </script>
 
 <template>
-  <div class="card">
+  <div class="card" data-step="1" style="--i:1">
     <h2><span class="no">1</span>AI 生成图案</h2>
     <p class="desc">用一句话描述想要的图案，AI 生成后自动转为拼豆图纸</p>
 
@@ -91,8 +91,8 @@ async function onGenerate() {
     </button>
 
     <div v-if="busy" class="ai-loading">
-      <div class="spin"></div>
-      正在绘制你的图案，请稍候…
+      <div class="beads"><i></i><i></i><i></i><i></i></div>
+      正在用彩豆拼你的图案，请稍候…
     </div>
 
     <div v-if="needKey" class="hint-box">

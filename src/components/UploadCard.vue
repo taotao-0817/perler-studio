@@ -76,7 +76,7 @@ async function useSample(s) {
 </script>
 
 <template>
-  <div class="card" @paste="onPaste">
+  <div class="card" data-step="1" style="--i:1" @paste="onPaste">
     <h2><span class="no">1</span>选择图案</h2>
     <p class="desc">上传任意图片（照片 / 截图 / 表情包都可以），支持拍照与拖拽</p>
 

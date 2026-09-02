@@ -71,7 +71,7 @@ const totalBeads = () => props.pattern.width * props.pattern.height
 </script>
 
 <template>
-  <div class="card">
+  <div class="card" data-step="3" style="--i:3">
     <h2><span class="no">3</span>拼豆图纸</h2>
     <p class="desc" v-if="pattern">
       {{ pattern.width }}×{{ pattern.height }} 格 · {{ pattern.stats.length }} 种颜色 ·
