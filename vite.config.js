@@ -3,6 +3,8 @@ import vue from '@vitejs/plugin-vue'
 import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
+  // GitHub Pages 项目站点运行在 /repo/ 子路径下，必须用相对路径
+  base: './',
   plugins: [
     vue(),
     VitePWA({
