@@ -9,7 +9,7 @@ import SettingsCard from './components/SettingsCard.vue'
 import PatternCard from './components/PatternCard.vue'
 import AiSettingsModal from './components/AiSettingsModal.vue'
 import ContactModal from './components/ContactModal.vue'
-import { fileToPattern } from './lib/pipeline.js'
+import { fileToPattern, makeThumb } from './lib/pipeline.js'
 import { getPalette } from './lib/palettes.js'
 
 const mode = ref('upload') // upload | ai
@@ -26,10 +26,12 @@ const params = reactive({
   gridH: 29,
   maxColors: 0,      // 0 = 不限制
   denoise: true,
+  useClustering: true, // k-means 主色聚类，更拟合原图
   paletteId: 'perler',
 })
 
 const sourceInfo = ref(null) // { name, w, h }
+const sourceThumb = ref('')  // 原图缩略图 dataURL（对比用）
 
 function toast(msg) {
   toastMsg.value = msg
@@ -65,12 +67,14 @@ async function processSource(file, info) {
       gridH: params.gridH,
       maxColors: params.maxColors,
       denoise: params.denoise,
+      useClustering: params.useClustering,
       paletteId: params.paletteId,
     })
     p.paletteId = params.paletteId
     pattern.value = p
     sourceInfo.value = info
     sourceFile.value = file
+    sourceThumb.value = await makeThumb(file, 260)
     toast(`🎉 图纸生成成功！${p.width}×${p.height} 格 · ${p.stats.length} 色`)
     celebrate()
   } catch (e) {
@@ -140,7 +144,7 @@ const FLOAT_BEADS = [
     <SettingsCard v-model:params="params" :has-source="!!sourceFile" @regenerate="regenerate" />
 
     <!-- 第 3 步：图纸 -->
-    <PatternCard v-if="pattern" :pattern="pattern" :params="params" :board-count="boardCount" :source-info="sourceInfo" @toast="toast" />
+    <PatternCard v-if="pattern" :pattern="pattern" :params="params" :board-count="boardCount" :source-info="sourceInfo" :source-thumb="sourceThumb" @toast="toast" />
 
     <div v-else class="card empty" style="--i:3">
       <div class="big">🧩</div>

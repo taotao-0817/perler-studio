@@ -1,6 +1,6 @@
 <script setup>
 // ============================================================
-// PatternCard.vue — 图纸预览 + 材料统计 + 导出
+// PatternCard.vue — 图纸预览 + 原图对比 + 材料统计 + 导出
 // ============================================================
 import { ref, watch, onMounted, nextTick } from 'vue'
 import { renderPatternCanvas, assignSeq, printPattern, exportPNG, exportCSV } from '../lib/render.js'
@@ -10,18 +10,18 @@ const props = defineProps({
   params: { type: Object, required: true },
   boardCount: Number,
   sourceInfo: Object,
+  sourceThumb: String,
 })
 const emit = defineEmits(['toast'])
 
 const canvasRef = ref(null)
-const viewMode = ref('solid') // solid | symbol
+const viewMode = ref('overlay') // solid | overlay | symbol
 const showGrid = ref(true)
 const zoom = ref(1)
-const preview = ref(null)
+const showOriginal = ref(false) // 原图对比
 
 const ZOOMS = [0.5, 0.75, 1, 1.5, 2, 3]
 
-/** 带序号的图纸（符号模式 + 图例用） */
 const numbered = ref(null)
 
 async function draw() {
@@ -49,6 +49,7 @@ function onPrint() {
     title: props.pattern.title,
     boardW: 29,
     boardH: 29,
+    showSymbol: true,
   })
 }
 
@@ -81,8 +82,10 @@ const totalBeads = () => props.pattern.width * props.pattern.height
 
     <div class="preview-tools">
       <button class="chip" :class="{ active: viewMode === 'solid' }" @click="viewMode = 'solid'">🎨 实色</button>
+      <button class="chip" :class="{ active: viewMode === 'overlay' }" @click="viewMode = 'overlay'">🔣 叠加</button>
       <button class="chip" :class="{ active: viewMode === 'symbol' }" @click="viewMode = 'symbol'">🔢 符号</button>
       <button class="chip" :class="{ active: showGrid }" @click="showGrid = !showGrid"># 网格</button>
+      <button class="chip" :class="{ active: showOriginal }" @click="showOriginal = !showOriginal">🖼️ 原图</button>
       <span style="flex:1"></span>
       <button class="chip" @click="zoom = ZOOMS[Math.max(0, ZOOMS.indexOf(zoom) - 1)]">−</button>
       <span style="font-size:12px;color:var(--muted);align-self:center">{{ Math.round(zoom * 100) }}%</span>
@@ -90,7 +93,8 @@ const totalBeads = () => props.pattern.width * props.pattern.height
     </div>
 
     <div class="preview-wrap">
-      <canvas ref="canvasRef"></canvas>
+      <img v-if="showOriginal && sourceThumb" :src="sourceThumb" alt="原图" class="thumb-view" />
+      <canvas v-else ref="canvasRef"></canvas>
     </div>
 
     <div class="btn-row">
@@ -103,10 +107,11 @@ const totalBeads = () => props.pattern.width * props.pattern.height
       <h3 style="font-size:13.5px;font-weight:800;margin:0 0 8px">🧮 所需豆子（共 {{ totalBeads() }} 颗）</h3>
       <table class="stats-table">
         <thead>
-          <tr><th style="width:40px">序</th><th>颜色</th><th>名称</th><th style="text-align:right">数量</th></tr>
+          <tr><th style="width:44px">色号</th><th style="width:40px">序</th><th>颜色</th><th>名称</th><th style="text-align:right">数量</th></tr>
         </thead>
         <tbody>
           <tr v-for="s in pattern.stats" :key="s.color.id">
+            <td><span class="line-no">{{ s.color.line || '·' }}</span></td>
             <td class="seq">{{ s.color.seq || numbered?.paletteObj.colors.find(c => c.id === s.color.id)?.seq || '·' }}</td>
             <td><span class="sw" :style="{ background: s.color.hex }"></span></td>
             <td>{{ s.color.nameZh }} <span style="color:var(--muted);font-size:11px">{{ s.color.name }}</span></td>
