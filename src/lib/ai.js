@@ -27,6 +27,18 @@ export const PROVIDERS = {
   },
 }
 
+/** 智谱 CogView-3-Flash 官方支持的尺寸枚举 */
+export const ZHIPU_SIZES = [
+  '1024x1024', '768x1024', '1024x768',
+  '1344x768', '768x1344', '864x1152', '1152x864',
+  '1440x960', '960x1440', '512x512',
+]
+
+/** 判断错误信息是否属于"尺寸不合法"，若是则换尺寸重试 */
+function isSizeError(msg) {
+  return /size|尺寸|512|2880|整数倍|像素|resolution/i.test(String(msg))
+}
+
 export function loadProviderSettings() {
   try {
     return JSON.parse(localStorage.getItem(LS_KEY)) || { zhipu: { key: '' }, custom: { key: '', baseUrl: '', model: '' } }
@@ -40,11 +52,11 @@ export function saveProviderSettings(s) {
 }
 
 /**
- * 调用图像生成 API
+ * 调用图像生成 API（含尺寸自适应重试）
  * @param {string} providerId 'zhipu' | 'custom'
  * @param {object} settings 保存的 key 配置
  * @param {string} prompt
- * @param {string} size '1024x1024' | '512x512'
+ * @param {string} size 期望尺寸（若不受支持会自动尝试其他尺寸）
  * @returns {Promise<Blob>} 生成的图片 blob
  */
 export async function generateImage(providerId, settings, prompt, size = '1024x1024') {
@@ -63,50 +75,67 @@ export async function generateImage(providerId, settings, prompt, size = '1024x1
   // 拼豆图案更适合方形；对绘图模型加风格提示
   const fullPrompt = `flat pixel-art style design for perler bead craft, clean bold shapes, clear outlines, no text watermark, ${prompt}`
 
-  const resp = await fetch(`${baseUrl}/images/generations`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({ model, prompt: fullPrompt, size, n: 1 }),
-  })
+  // 尺寸候选：优先用户期望的，再补充智谱支持的其他尺寸（出错时依次尝试）
+  const sizeCandidates = [size, ...(providerId === 'zhipu' ? ZHIPU_SIZES.filter((s) => s !== size) : [])]
 
-  if (!resp.ok) {
-    let msg = `HTTP ${resp.status}`
+  let lastErr = ''
+  for (const sz of sizeCandidates) {
     try {
-      const j = await resp.json()
-      msg = j.error?.message || j.message || msg
-    } catch { /* ignore */ }
-    throw new Error(`AI 生图失败：${msg}`)
-  }
+      const resp = await fetch(`${baseUrl}/images/generations`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({ model, prompt: fullPrompt, size: sz, n: 1 }),
+      })
 
-  const data = await resp.json()
-  const item = data.data?.[0]
-  if (!item) throw new Error('AI 返回异常：没有图片数据')
+      if (resp.ok) {
+        const data = await resp.json()
+        const item = data.data?.[0]
+        if (!item) throw new Error('AI 返回异常：没有图片数据')
+        // 两种返回格式：url 或 b64_json
+        let blob
+        if (item.b64_json) {
+          const bin = atob(item.b64_json)
+          const arr = new Uint8Array(bin.length)
+          for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i)
+          blob = new Blob([arr], { type: 'image/png' })
+        } else if (item.url) {
+          const r = await fetch(item.url)
+          if (!r.ok) throw new Error('图片下载失败')
+          blob = await r.blob()
+        } else {
+          throw new Error('AI 返回异常：未知格式')
+        }
+        return blob
+      }
 
-  // 两种返回格式：url 或 b64_json
-  let blob
-  if (item.b64_json) {
-    const bin = atob(item.b64_json)
-    const arr = new Uint8Array(bin.length)
-    for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i)
-    blob = new Blob([arr], { type: 'image/png' })
-  } else if (item.url) {
-    const r = await fetch(item.url)
-    if (!r.ok) throw new Error('图片下载失败')
-    blob = await r.blob()
-  } else {
-    throw new Error('AI 返回异常：未知格式')
+      // 解析错误
+      let msg = `HTTP ${resp.status}`
+      try {
+        const j = await resp.json()
+        msg = j.error?.message || j.message || msg
+      } catch { /* ignore */ }
+      lastErr = msg
+
+      // 若非尺寸错误，直接抛出，不再尝试其它尺寸
+      if (!isSizeError(msg)) break
+      // 是尺寸错误 → 换下一个尺寸继续
+    } catch (e) {
+      // 网络等异常，直接抛
+      if (/Failed to fetch|NetworkError|CORS/i.test(e.message)) throw new Error('网络请求失败，请检查网络或该接口是否支持浏览器直连（CORS）')
+      throw e
+    }
   }
-  return blob
+  throw new Error(`AI 生图失败：${lastErr || '所有尺寸均不受支持'}`)
 }
 
-/** 测试连接：发一个 1x1 的极简请求验证 key 是否有效（部分平台可能没有最小尺寸，忽略失败） */
+/** 测试连接：发一个智谱支持的最小尺寸请求验证 key 是否有效 */
 export async function testConnection(providerId, settings) {
   try {
-    await generateImage(providerId, settings, 'a tiny solid red square', '256x256')
-    return { ok: true, msg: '连接成功！' }
+    await generateImage(providerId, settings, 'a tiny solid red square', '512x512')
+    return { ok: true, msg: '连接成功！Key 有效 ✅' }
   } catch (e) {
     return { ok: false, msg: e.message }
   }

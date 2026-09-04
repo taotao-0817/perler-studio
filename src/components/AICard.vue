@@ -79,10 +79,12 @@ async function onGenerate() {
     </div>
 
     <div class="field">
-      <label>生成尺寸（越大细节越多）</label>
+      <label>生成尺寸（方形最适合拼豆；选错也会自动适配）</label>
       <div class="seg">
-        <button :class="{ active: size === '512x512' }" :disabled="busy" @click="size = '512x512'">512 · 快</button>
-        <button :class="{ active: size === '1024x1024' }" :disabled="busy" @click="size = '1024x1024'">1024 · 精细</button>
+        <button :class="{ active: size === '1024x1024' }" :disabled="busy" @click="size = '1024x1024'">1024 · 方形</button>
+        <button :class="{ active: size === '768x1024' }" :disabled="busy" @click="size = '768x1024'">768×1024 竖</button>
+        <button :class="{ active: size === '1024x768' }" :disabled="busy" @click="size = '1024x768'">1024×768 横</button>
+        <button :class="{ active: size === '512x512' }" :disabled="busy" @click="size = '512x512'">512 · 快速</button>
       </div>
     </div>
 
