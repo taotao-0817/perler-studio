@@ -93,8 +93,11 @@ const totalBeads = () => props.pattern.width * props.pattern.height
     </div>
 
     <div class="preview-wrap">
-      <img v-if="showOriginal && sourceThumb" :src="sourceThumb" alt="原图" class="thumb-view" />
-      <canvas v-else ref="canvasRef"></canvas>
+      <div class="sweep" :key="pattern" v-if="!showOriginal"></div>
+      <div class="preview-inner">
+        <img v-if="showOriginal && sourceThumb" :src="sourceThumb" alt="原图" class="thumb-view" />
+        <canvas v-else ref="canvasRef"></canvas>
+      </div>
     </div>
 
     <div class="btn-row">

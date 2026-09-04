@@ -85,6 +85,7 @@ async function useSample(s) {
          @dragover.prevent="dragOver = true"
          @dragleave="dragOver = false"
          @drop.prevent="onDrop">
+      <div class="ripple"></div>
       <div class="big">🧩</div>
       <div class="t1">{{ processing ? '正在生成图纸…' : '点击选择图片' }}</div>
       <div class="t2">或拖拽图片到这里 · 也可 Ctrl+V 粘贴</div>
