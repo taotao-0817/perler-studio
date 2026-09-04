@@ -176,6 +176,7 @@ const FLOAT_BEADS = [
       <div class="sub"><span class="emoji">✨</span> 拼豆图纸生成器 · 图片 / AI 一键出图纸</div>
     </div>
     <div class="spacer"></div>
+    <button class="icon-btn" title="AI 生成设置" @click="showAiSettings = true">⚙️</button>
     <button class="icon-btn" title="GitHub 仓库" @click="openGithub">🐙</button>
     <button class="icon-btn" :title="theme === 'dark' ? '切换浅色' : '切换深色'" @click="toggleTheme">{{ theme === 'dark' ? '☀️' : '🌙' }}</button>
   </div>
@@ -201,6 +202,7 @@ const FLOAT_BEADS = [
     <div class="footer">
       数据全程在本地处理，不上传任何服务器 · 支持添加到主屏幕使用<br />
       开发者：涛涛 · <button class="link-btn" @click="showContact = true">📮 联系作者</button><br />
+      Perler Studio <span class="heart">❤</span> 为拼豆爱好者制作<br />
       <span class="magic">Craft pixel magic</span> <span class="px"><i></i><i></i><i></i></span>
     </div>
   </div>
